@@ -38,6 +38,17 @@ use Symfony\Component\Routing\RouteCollection;
  */
 class TextDescriptor extends Descriptor
 {
+    private const VERB_COLORS = [
+        'ANY' => 'red',
+        'GET' => 'blue',
+        'HEAD' => '#6C7280',
+        'OPTIONS' => '#6C7280',
+        'POST' => 'yellow',
+        'PUT' => 'yellow',
+        'PATCH' => 'yellow',
+        'DELETE' => 'red',
+    ];
+
     public function __construct(
         private ?FileLinkFormatter $fileLinkFormatter = null,
     ) {
@@ -45,38 +56,58 @@ class TextDescriptor extends Descriptor
 
     protected function describeRouteCollection(RouteCollection $routes, array $options = []): void
     {
-        $showControllers = isset($options['show_controllers']) && $options['show_controllers'];
-
-        $tableHeaders = ['Name', 'Method', 'Scheme', 'Host', 'Path'];
-        if ($showControllers) {
-            $tableHeaders[] = 'Controller';
-        }
-
-        if ($showAliases = $options['show_aliases'] ?? false) {
-            $tableHeaders[] = 'Aliases';
-        }
+        $showAliases = $options['show_aliases'] ?? false;
 
         $tableRows = [];
+        $shouldShowSchema = false;
+        $shouldShowHost = false;
         foreach ($routes->all() as $name => $route) {
             $controller = $route->getDefault('_controller');
 
+            $schema = $route->getSchemes() ? implode('|', $route->getSchemes()) : 'ANY';
+            $shouldShowSchema = $shouldShowSchema || 'ANY' !== $schema;
+
+            $host = '' !== $route->getHost() ? $route->getHost() : 'ANY';
+            $shouldShowHost = $shouldShowHost || 'ANY' !== $host;
+
             $row = [
-                $name,
-                $route->getMethods() ? implode('|', $route->getMethods()) : 'ANY',
-                $route->getSchemes() ? implode('|', $route->getSchemes()) : 'ANY',
-                '' !== $route->getHost() ? $route->getHost() : 'ANY',
-                $this->formatControllerLink($controller, $route->getPath(), $options['container'] ?? null),
+                'Name' => $name,
+                'Methods' => $this->formatMethods($route->getMethods()),
+                'Schema' => $schema,
+                'Host' => $host,
+                'Path' => $route->getPath(),
+                'Controller' => $controller ? $this->formatControllerLink($controller, $this->formatCallable($controller), $options['container'] ?? null) : '',
             ];
 
-            if ($showControllers) {
-                $row[] = $controller ? $this->formatControllerLink($controller, $this->formatCallable($controller), $options['container'] ?? null) : '';
-            }
-
             if ($showAliases) {
-                $row[] = implode('|', ($reverseAliases ??= $this->getReverseAliases($routes))[$name] ?? []);
+                $row['Aliases'] = implode('|', ($reverseAliases ??= $this->getReverseAliases($routes))[$name] ?? []);
             }
 
             $tableRows[] = $row;
+        }
+
+        $tableHeaders = ['Name', 'Method'];
+
+        if ($shouldShowSchema) {
+            $tableHeaders[] = 'Schema';
+        } else {
+            array_walk($tableRows, function (&$row) {
+                unset($row['Schema']);
+            });
+        }
+
+        if ($shouldShowHost) {
+            $tableHeaders[] = 'Host';
+        } else {
+            array_walk($tableRows, function (&$row) {
+                unset($row['Host']);
+            });
+        }
+
+        $tableHeaders = array_merge($tableHeaders, ['Path', 'Controller']);
+
+        if ($showAliases = $options['show_aliases'] ?? false) {
+            $tableHeaders[] = 'Aliases';
         }
 
         if (isset($options['output'])) {
@@ -574,6 +605,18 @@ class TextDescriptor extends Descriptor
         }
 
         return trim($configAsString);
+    }
+
+    private function formatMethods(array $methods): string
+    {
+        if (!$methods) {
+            $methods = ['ANY'];
+        }
+
+        return implode('<fg=#6C7280>|</>', array_map(
+            fn (string $method): string => '<fg='.self::VERB_COLORS[$method].'>'.$method.'</>',
+            $methods
+        ));
     }
 
     private function formatControllerLink(mixed $controller, string $anchorText, ?callable $getContainer = null): string

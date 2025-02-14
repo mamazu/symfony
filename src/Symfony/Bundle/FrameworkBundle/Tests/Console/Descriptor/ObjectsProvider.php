@@ -11,6 +11,7 @@
 
 namespace Symfony\Bundle\FrameworkBundle\Tests\Console\Descriptor;
 
+use Symfony\Bundle\FrameworkBundle\Controller\RedirectController;
 use Symfony\Bundle\FrameworkBundle\Tests\Fixtures\FooUnitEnum;
 use Symfony\Bundle\FrameworkBundle\Tests\Fixtures\Suit;
 use Symfony\Component\DependencyInjection\Alias;
@@ -34,7 +35,32 @@ class ObjectsProvider
             $collection1->add($name, $route);
         }
 
-        return ['route_collection_1' => $collection1];
+        $routesWithGenericHost = new RouteCollection();
+        $routesWithGenericHost->add('some_route', new RouteStub(
+            '/some-route',
+            ['_controller' => 'Controller'],
+            [],
+            [],
+            null,
+            ['https'],
+        ));
+
+        $routesWithGenericSchema = new RouteCollection();
+        $routesWithGenericSchema->add('some_route_with_host', new RouteStub(
+            '/some-route',
+            ['_controller' => [RedirectController::class, 'redirectAction']],
+            [],
+            [],
+            'symfony.com',
+            [],
+        ));
+
+        return [
+            'empty_route_collection' => new RouteCollection(),
+            'route_collection_1' => $collection1,
+            'route_with_generic_host' => $routesWithGenericHost,
+            'route_with_generic_schema' => $routesWithGenericSchema,
+        ];
     }
 
     public static function getRoutes()

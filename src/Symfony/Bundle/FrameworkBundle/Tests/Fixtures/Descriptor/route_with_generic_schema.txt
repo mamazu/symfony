@@ -1,0 +1,6 @@
+ ---------------------- -------- ------------- ------------- -------------------------------------------------------------------------------- 
+ [32m Name                 [39m [32m Method [39m [32m Host        [39m [32m Path        [39m [32m Controller                                                                     [39m 
+ ---------------------- -------- ------------- ------------- -------------------------------------------------------------------------------- 
+  some_route_with_host   [31mANY[39m      symfony.com   /some-route   ]8;;myeditor://open?file=/home/mamazu/packages/symfony/symfony/src/Symfony/Bundle/FrameworkBundle/Controller/RedirectController.php&line=53\Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction()]8;;\  
+ ---------------------- -------- ------------- ------------- -------------------------------------------------------------------------------- 
+
