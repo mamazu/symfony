@@ -82,6 +82,9 @@ EOF
         if ($this->fileLinkFormatter) {
             $container = fn () => $this->getContainerBuilder($this->getApplication()->getKernel());
         }
+        if ($input->getOption('show-controllers')){
+            trigger_deprecation('symfony/console', '7.3', 'Using --show-controllers is deprecated. They are shown by default now.');
+        }
 
         if ($name) {
             $route = $routes->get($name);
